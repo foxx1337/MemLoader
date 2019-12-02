@@ -1,7 +1,7 @@
-#include <gtest/gtest.h>
-#include "MemoryFunctions.h"
-
 #include <vector>
+#include <gtest/gtest.h>
+
+#include "MemoryFunctions.h"
 
 namespace {
     using namespace std;

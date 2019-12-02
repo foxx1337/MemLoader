@@ -1,8 +1,11 @@
-#include <algorithm>
 #include "MemoryFunctions.h"
+
+#include <algorithm>
 #include <functional>
 
-using namespace std;
+using std::function;
+using std::min;
+using std::vector;
 
 namespace MemLoader {
     vector<unsigned int>::const_iterator clamp_to_end(const vector<unsigned int> &source, const vector<unsigned int> &destination, size_t offset)
@@ -72,7 +75,7 @@ namespace MemLoader {
     void pad(
         const vector<unsigned int>& source,
         vector<unsigned int>& destination,
-        function<void(const vector<unsigned int>&, vector<unsigned int>&, size_t)> copy_function)
+        const function<void(const vector<unsigned int>&, vector<unsigned int>&, size_t)>& copy_function)
     {
         for (size_t i = 0; i + source.size() <= destination.size(); i += source.size())
         {

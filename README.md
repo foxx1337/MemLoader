@@ -4,7 +4,6 @@
 
 1. `cmake`
 2. `vcpkg`
-
    1. `googletest`
 
       ```shell

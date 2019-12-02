@@ -4,8 +4,6 @@
 
 class auto_timer
 {
-private:
-    std::chrono::steady_clock::time_point start;
 public:
     auto_timer()
     {
@@ -26,6 +24,10 @@ public:
         const std::chrono::duration<long, std::nano> nanoResult = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
         std::cout << "... and as nanoseconds " << nanoResult.count() << std::endl;
     }
+
+private:
+    std::chrono::steady_clock::time_point start;
+
 };
 
 void test_sleep()

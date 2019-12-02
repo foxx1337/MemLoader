@@ -4,10 +4,10 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <thread>
 
 #include "MemoryFunctions.h"
 #include "TimedExecutor.h"
-#include <thread>
 
 using namespace std;
 using namespace MemLoader;

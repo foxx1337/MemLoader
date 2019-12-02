@@ -1,6 +1,3 @@
-// TimedExecutor.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -8,10 +5,6 @@
 
 class auto_timer
 {
-private:
-    const std::chrono::steady_clock::time_point start;
-    std::chrono::high_resolution_clock::duration &duration;
-
 public:
     auto_timer(std::chrono::high_resolution_clock::duration &duration) :
         start(std::chrono::high_resolution_clock::now()),
@@ -25,21 +18,15 @@ public:
         const std::chrono::steady_clock::time_point stop = std::chrono::high_resolution_clock::now();
         duration = stop - start;
     }
+
+private:
+    const std::chrono::steady_clock::time_point start;
+    std::chrono::high_resolution_clock::duration& duration;
 };
 
 class timed_executor
 {
-private:
-    std::chrono::high_resolution_clock::duration duration;
-
-    template <class T>
-    timed_executor(T proc) : duration(0)
-    {
-        auto_timer the_timer(this->duration);
-        proc();
-    }
-
- public:
+public:
     template <class _To, class T>
     static _To run_timed(T proc)
     {
@@ -54,6 +41,16 @@ private:
         std::cout << "functional version" << std::endl;
         const timed_executor executor(proc);
         return std::chrono::duration_cast<_To>(executor.duration);
+    }
+
+private:
+    std::chrono::high_resolution_clock::duration duration;
+
+    template <class T>
+    timed_executor(T proc) : duration(0)
+    {
+        auto_timer the_timer(this->duration);
+        proc();
     }
 };
 

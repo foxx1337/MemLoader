@@ -6,19 +6,26 @@
 
 namespace MemLoader
 {
-    std::vector<unsigned int>::const_iterator clamp_to_end(const std::vector<unsigned int>& source, const std::vector<unsigned int>& destination, size_t offset);
-    void std_copy(const std::vector<unsigned int> &source, std::vector<unsigned int> &destination, size_t offset);
-    void manual_copy(const std::vector<unsigned int> &source, std::vector<unsigned int> &destination, size_t offset);
-    void mech_copy(const std::vector<unsigned int> &source, std::vector<unsigned int> &destination, size_t offset);
+    typedef unsigned int dword;
+    typedef std::vector<dword> dwords;
 
-    bool std_equals(const std::vector<unsigned int>& source, const std::vector<unsigned int>& destination, size_t offset);
-    bool manual_equals(const std::vector<unsigned int>& source, const std::vector<unsigned int>& destination, size_t offset);
-    bool mech_equals(const std::vector<unsigned int>& source, const std::vector<unsigned int>& destination, size_t offset);
+    void std_copy(const dwords& source, std::vector<unsigned int>& destination, size_t offset);
+    void manual_copy(const dwords& source, dwords& destination, size_t offset);
+    void mech_copy(const dwords& source, dwords& destination, size_t offset);
+
+    bool std_equals(const dwords& pattern, const dwords& tileset, size_t offset);
+    bool manual_equals(const dwords& pattern, const dwords& tileset, size_t offset);
+    bool mech_equals(const dwords& pattern, const dwords& tileset, size_t offset);
 
     void pad(
-        const std::vector<unsigned int>& source,
-        std::vector<unsigned int>& destination,
-        const std::function<void(const std::vector<unsigned int>&, std::vector<unsigned int>&, size_t)>& copy_function);
+        const dwords& source,
+        dwords& destination,
+        const std::function<void(const dwords&, dwords&, size_t)>& copy_function);
+
+    bool accumulate(
+        const dwords& pattern,
+        const dwords& tileset,
+        const std::function<bool(const dwords&, const dwords&, size_t)>& equals_function);
 }
 
 #endif // MEMLOADER_MEMORYFUNCTIONS_H_

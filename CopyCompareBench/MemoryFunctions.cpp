@@ -5,23 +5,37 @@
 
 using std::function;
 using std::min;
-using std::vector;
 
 namespace MemLoader {
-    vector<unsigned int>::const_iterator clamp_to_end(const vector<unsigned int> &source, const vector<unsigned int> &destination, size_t offset)
+    dwords::const_iterator clamp_first_to_end(const dwords& first, const dwords& second, size_t offset)
     {
-        return source.begin() + min(source.size(), destination.size() - offset);
+        const size_t to_seconds_end = second.size() > offset ? second.size() - offset : 0;
+
+        return first.begin() + min(first.size(), to_seconds_end);
     }
 
-    void std_copy(const vector<unsigned int> &source, vector<unsigned int> &destination, size_t offset)
+    dwords::iterator clamp_to_end(dwords& values, size_t offset)
     {
-        const vector<unsigned int>::const_iterator source_end =
-            clamp_to_end(source, destination, offset);
-
-        copy(source.begin(), source_end, destination.begin() + offset);
+        return values.begin() + min(values.size(), offset);
     }
 
-    void manual_copy(const vector<unsigned int> &source, vector<unsigned int> &destination, size_t offset)
+    dwords::const_iterator clamp_to_end(const dwords& values, size_t offset)
+    {
+        return values.begin() + min(values.size(), offset);
+    }
+
+    void std_copy(const dwords& source, dwords& destination, size_t offset)
+    {
+        const auto source_end =
+            clamp_first_to_end(source, destination, offset);
+
+        const auto destination_offset =
+            clamp_to_end(destination, offset);
+
+        copy(source.begin(), source_end, destination_offset);
+    }
+
+    void manual_copy(const dwords& source, dwords& destination, size_t offset)
     {
         size_t position = offset;
         for (auto i = source.begin(); i != source.end() && position < destination.size(); ++i)
@@ -30,30 +44,35 @@ namespace MemLoader {
         }
     }
 
-    void mech_copy(const vector<unsigned int> &source, vector<unsigned int> &destination, size_t offset)
+    void mech_copy(const dwords& source, dwords& destination, size_t offset)
     {
+        const size_t remaining_destination = destination.size() > offset
+            ? destination.size() - offset
+            : 0;
+
         memcpy(
             destination.data() + offset,
             source.data(),
-            min(
-                source.size(),
-                destination.size() - offset) * sizeof(unsigned int));
+            min(source.size(),remaining_destination) * sizeof(unsigned int));
     }
 
-    bool std_equals(const vector<unsigned int> &source, const vector<unsigned int> &destination, size_t offset)
+    bool std_equals(const dwords& pattern, const dwords& tileset, size_t offset)
     {
-        const vector<unsigned int>::const_iterator source_end =
-            clamp_to_end(source, destination, offset);
+        const auto pattern_end =
+            clamp_first_to_end(pattern, tileset, offset);
 
-        return equal(source.begin(), source_end, destination.begin() + offset);
+        const auto tileset_offset =
+            clamp_to_end(tileset, offset);
+
+        return equal(pattern.begin(), pattern_end, tileset_offset);
     }
 
-    bool manual_equals(const vector<unsigned int> &source, const vector<unsigned int> &destination, size_t offset)
+    bool manual_equals(const dwords& pattern, const dwords& tileset, size_t offset)
     {
         size_t position = offset;
-        for (auto i = source.begin(); i != source.end() && position < destination.size(); ++i)
+        for (auto i = pattern.begin(); i != pattern.end() && position < tileset.size(); ++i)
         {
-            if (destination[position++] != *i)
+            if (tileset[position++] != *i)
             {
                 return false;
             }
@@ -62,24 +81,43 @@ namespace MemLoader {
         return true;
     }
 
-    bool mech_equals(const vector<unsigned int> &source, const vector<unsigned int> &destination, size_t offset)
+    bool mech_equals(const dwords& pattern, const dwords& tileset, size_t offset)
     {
+        const size_t remaining_tileset = tileset.size() > offset
+            ? tileset.size() - offset
+            : 0;
+
         return memcmp(
-            source.data(),
-            destination.data() + offset,
-            min(
-                source.size(), 
-                destination.size() - offset) * sizeof(unsigned int)) != 0;
+            pattern.data(),
+            tileset.data() + offset,
+            min(pattern.size(), remaining_tileset) * sizeof(unsigned int)) == 0;
     }
 
     void pad(
-        const vector<unsigned int>& source,
-        vector<unsigned int>& destination,
-        const function<void(const vector<unsigned int>&, vector<unsigned int>&, size_t)>& copy_function)
+        const dwords& source,
+        dwords& destination,
+        const function<void(const dwords&, dwords&, size_t)>& copy_function)
     {
         for (size_t i = 0; i + source.size() <= destination.size(); i += source.size())
         {
             copy_function(source, destination, i);
         }
     }
+
+    bool accumulate(
+        const dwords& pattern,
+        const dwords& tileset,
+        const function<bool(const dwords&, const dwords&, size_t)>& equals_function)
+    {
+        for (size_t i = 0; i + pattern.size() <= tileset.size(); i += pattern.size())
+        {
+            if (!equals_function(pattern, tileset, i))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 }

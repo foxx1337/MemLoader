@@ -104,7 +104,7 @@ namespace MemLoader {
         }
     }
 
-    bool accumulate(
+    bool accu(
         const dwords& pattern,
         const dwords& tileset,
         const function<bool(const dwords&, const dwords&, size_t)>& equals_function)

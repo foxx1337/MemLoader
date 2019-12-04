@@ -22,7 +22,7 @@ namespace MemLoader
         dwords& destination,
         const std::function<void(const dwords&, dwords&, size_t)>& copy_function);
 
-    bool accumulate(
+    bool accu(
         const dwords& pattern,
         const dwords& tileset,
         const std::function<bool(const dwords&, const dwords&, size_t)>& equals_function);

@@ -8,9 +8,7 @@ namespace {
     using namespace testing;
     using namespace MemLoader;
 
-    typedef void (*CopyFunction)(const dwords&, dwords&, size_t);
-
-    class CopyFunctionsTest : public TestWithParam<CopyFunction>
+    class CopyFunctionsTest : public TestWithParam<copy_method *>
     {
     };
 
@@ -19,7 +17,7 @@ namespace {
         const dwords source = { 1, 2, 3 };
         dwords destination(9);
 
-        (*GetParam())(source, destination, 3);
+        GetParam()->copy(source, destination.begin() + 3);
 
         ASSERT_EQ(destination, dwords({ 0, 0, 0, 1, 2, 3, 0, 0, 0 }));
     }
@@ -29,7 +27,7 @@ namespace {
         const dwords source = { 1, 2, 3, 4, 5 };
         dwords destination(3);
 
-        (*GetParam())(source, destination, 0);
+        GetParam()->copy_at_end(source, destination.begin(), destination.end());
 
         ASSERT_EQ(destination, dwords({ 1, 2, 3 }));
     }
@@ -39,23 +37,19 @@ namespace {
         const dwords source = { 1, 2, 3 };
         dwords destination(9);
 
-        (*GetParam())(source, destination, 7);
+        GetParam()->copy_at_end(source, destination.begin() + 7, destination.end());
 
         ASSERT_EQ(destination, dwords({ 0, 0, 0, 0, 0, 0, 0, 1, 2 }));
     }
 
-    TEST_P(CopyFunctionsTest, AfterEnd)
+    TEST_P(CopyFunctionsTest, AtEnd)
     {
         const dwords source = { 1, 2, 3 };
         dwords destination(1);
 
-        (*GetParam())(source, destination, 1);
+        GetParam()->copy_at_end(source, destination.begin(), destination.end());
 
-        ASSERT_EQ(destination, dwords({ 0 }));
-
-        (*GetParam())(source, destination, 10);
-
-        ASSERT_EQ(destination, dwords({ 0 }));
+        ASSERT_EQ(destination, dwords({ 1 }));
     }
 
     TEST_P(CopyFunctionsTest, LargerSource)
@@ -63,19 +57,17 @@ namespace {
         const dwords source = { 1, 2, 3, 4, 5, 6 };
         dwords destination(5);
 
-        (*GetParam())(source, destination, 0);
+        GetParam()->copy_at_end(source, destination.begin(), destination.end());
 
         ASSERT_EQ(destination, dwords({ 1, 2, 3, 4, 5 }));
     }
 
     INSTANTIATE_TEST_SUITE_P(CopiesOnly, CopyFunctionsTest, Values(
-        std_copy,
-        manual_copy,
-        mech_copy));
+        &std_copy::instance(),
+        &manual_copy::instance(),
+        &mech_copy::instance()));
 
-    typedef bool (*EqualityFunction)(const dwords&, const dwords&, size_t);
-
-    class EqualityFunctionsTest : public TestWithParam<EqualityFunction>
+    class EqualityFunctionsTest : public TestWithParam<match_method *>
     {
     };
 
@@ -84,7 +76,8 @@ namespace {
         const dwords pattern = { 1, 2, 3 };
         const dwords tileset = { 1, 2, 3 };
 
-        ASSERT_TRUE((*GetParam())(pattern, tileset, 0));
+        ASSERT_TRUE(GetParam()->matches(pattern, tileset.begin()));
+        ASSERT_TRUE(GetParam()->matches_at_end(pattern, tileset.begin(), tileset.end()));
     }
 
     TEST_P(EqualityFunctionsTest, OffsetCheck)
@@ -92,8 +85,8 @@ namespace {
         const dwords pattern = { 1, 2, 3 };
         const dwords tileset = { 0, 1, 2, 3, 4 };
 
-        ASSERT_TRUE((*GetParam())(pattern, tileset, 1));
-        ASSERT_FALSE((*GetParam())(pattern, tileset, 0));
+        ASSERT_TRUE(GetParam()->matches(pattern, tileset.begin() + 1));
+        ASSERT_FALSE(GetParam()->matches(pattern, tileset.begin()));
     }
 
     TEST_P(EqualityFunctionsTest, OffsetOverflowCheck)
@@ -101,15 +94,12 @@ namespace {
         const dwords pattern = { 1, 2, 3 };
         const dwords tileset = { 0, 1, 2 };
 
-        ASSERT_TRUE((*GetParam())(pattern, tileset, 1));
-        ASSERT_FALSE((*GetParam())(pattern, tileset, 2));
-
-        ASSERT_TRUE((*GetParam())(pattern, tileset, 3));
-        ASSERT_TRUE((*GetParam())(pattern, tileset, 10));
+        ASSERT_TRUE(GetParam()->matches_at_end(pattern, tileset.begin() + 1, tileset.end()));
+        ASSERT_FALSE(GetParam()->matches_at_end(pattern, tileset.begin() + 2, tileset.end()));
     }
 
     INSTANTIATE_TEST_SUITE_P(EqualityOnly, EqualityFunctionsTest, Values(
-        std_equals,
-        manual_equals,
-        mech_equals));
+        &std_match::instance(),
+        &manual_match::instance(),
+        &mech_match::instance()));
 }

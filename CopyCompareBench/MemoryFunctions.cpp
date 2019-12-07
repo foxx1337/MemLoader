@@ -7,72 +7,158 @@ using std::function;
 using std::min;
 
 namespace MemLoader {
-    dwords::const_iterator clamp_first_to_end(const dwords& first, const dwords& second, size_t offset)
+    dwords::const_iterator clamp_to_second_end(
+        const dwords &first,
+        dwords::const_iterator second_begin,
+        dwords::const_iterator second_end)
     {
-        const size_t to_seconds_end = second.size() > offset ? second.size() - offset : 0;
+        const size_t second_capacity = second_end > second_begin ? second_end - second_begin : 0;
 
-        return first.begin() + min(first.size(), to_seconds_end);
+        return first.begin() + std::min(first.size(), second_capacity);
     }
 
-    dwords::iterator clamp_to_end(dwords& values, size_t offset)
+    void copy_method::pad(
+        const dwords &source,
+        dwords::iterator destination_begin,
+        dwords::iterator destination_end, const copy_method &copier)
     {
-        return values.begin() + min(values.size(), offset);
+        auto destination = destination_begin;
+
+        while (destination + source.size() <= destination_end)
+        {
+            copier.copy(source, destination);
+            destination += source.size();
+        }
+
+        copier.copy_at_end(source, destination, destination_end);
     }
 
-    dwords::const_iterator clamp_to_end(const dwords& values, size_t offset)
+    std_copy &std_copy::instance()
     {
-        return values.begin() + min(values.size(), offset);
+        static std_copy instance;
+
+        return instance;
     }
 
-    void std_copy(const dwords& source, dwords& destination, size_t offset)
+    void std_copy::copy(const dwords &source, dwords::iterator destination_begin) const
+    {
+        std::copy(source.begin(), source.end(), destination_begin);
+    }
+
+    void std_copy::copy_at_end(const dwords &source, dwords::iterator destination_begin, dwords::iterator destination_end) const
     {
         const auto source_end =
-            clamp_first_to_end(source, destination, offset);
+            clamp_to_second_end(source, destination_begin, destination_end);
 
-        const auto destination_offset =
-            clamp_to_end(destination, offset);
-
-        copy(source.begin(), source_end, destination_offset);
+        std::copy(source.begin(), source_end, destination_begin);
     }
 
-    void manual_copy(const dwords& source, dwords& destination, size_t offset)
+    manual_copy &manual_copy::instance()
     {
-        size_t position = offset;
-        for (auto i = source.begin(); i != source.end() && position < destination.size(); ++i)
+        static manual_copy instance;
+
+        return instance;
+    }
+
+    void manual_copy::copy(const dwords &source, dwords::iterator destination_begin) const
+    {
+        auto destination = destination_begin;
+        for (auto i : source)
         {
-            destination[position++] = *i;
+            *destination++ = i;
         }
     }
 
-    void mech_copy(const dwords& source, dwords& destination, size_t offset)
+    void manual_copy::copy_at_end(const dwords &source, dwords::iterator destination_begin, dwords::iterator destination_end) const
     {
-        const size_t remaining_destination = destination.size() > offset
-            ? destination.size() - offset
-            : 0;
-
-        memcpy(
-            destination.data() + offset,
-            source.data(),
-            min(source.size(),remaining_destination) * sizeof(unsigned int));
+        auto destination = destination_begin;
+        for (auto i = source.begin(); i != source.end() && destination < destination_end; ++i)
+        {
+            *destination++ = *i;
+        }
     }
 
-    bool std_equals(const dwords& pattern, const dwords& tileset, size_t offset)
+    mech_copy &mech_copy::instance()
+    {
+        static mech_copy instance;
+
+        return instance;
+    }
+
+    void mech_copy::copy(const dwords &source, dwords::iterator destination_begin) const
+    {
+        memcpy(
+            &(*destination_begin),
+            source.data(),
+            source.size() * sizeof(dword));
+    }
+
+    void mech_copy::copy_at_end(const dwords &source, dwords::iterator destination_begin, dwords::iterator destination_end) const
+    {
+        const size_t destination_remaining = destination_end > destination_begin
+            ? destination_end - destination_begin
+            : 0;
+        memcpy(
+            &(*destination_begin),
+            source.data(),
+            min(source.size(), destination_remaining) * sizeof(dword));
+    }
+
+    bool match_method::accu(
+        const dwords &pattern,
+        dwords::const_iterator tileset_begin,
+        dwords::const_iterator tileset_end,
+        const match_method &matcher)
+    {
+        auto tileset = tileset_begin;
+
+        while (tileset + pattern.size() <= tileset_end)
+        {
+            if (!matcher.matches(pattern, tileset))
+            {
+                return false;
+            }
+
+            tileset += pattern.size();
+        }
+
+        return matcher.matches_at_end(pattern, tileset, tileset_end);
+    }
+
+
+    std_match &std_match::instance()
+    {
+        static std_match instance;
+
+        return instance;
+    }
+
+    bool std_match::matches(const dwords &pattern, dwords::const_iterator tileset_begin) const
+    {
+        return std::equal(pattern.begin(), pattern.end(), tileset_begin);
+    }
+
+    bool std_match::matches_at_end(const dwords &pattern, dwords::const_iterator tileset_begin, dwords::const_iterator tileset_end) const
     {
         const auto pattern_end =
-            clamp_first_to_end(pattern, tileset, offset);
+            clamp_to_second_end(pattern, tileset_begin, tileset_end);
 
-        const auto tileset_offset =
-            clamp_to_end(tileset, offset);
-
-        return equal(pattern.begin(), pattern_end, tileset_offset);
+        return std::equal(pattern.begin(), pattern_end, tileset_begin);
     }
 
-    bool manual_equals(const dwords& pattern, const dwords& tileset, size_t offset)
+    manual_match &manual_match::instance()
     {
-        size_t position = offset;
-        for (auto i = pattern.begin(); i != pattern.end() && position < tileset.size(); ++i)
+        static manual_match instance;
+
+        return instance;
+    }
+
+    bool manual_match::matches(const dwords &pattern, dwords::const_iterator tileset_begin) const
+    {
+        auto element = tileset_begin;
+        for (auto i : pattern)
         {
-            if (tileset[position++] != *i)
+            if (i != * element++)
             {
                 return false;
             }
@@ -81,27 +167,45 @@ namespace MemLoader {
         return true;
     }
 
-    bool mech_equals(const dwords& pattern, const dwords& tileset, size_t offset)
+    bool manual_match::matches_at_end(const dwords &pattern, dwords::const_iterator tileset_begin, dwords::const_iterator tileset_end) const
     {
-        const size_t remaining_tileset = tileset.size() > offset
-            ? tileset.size() - offset
-            : 0;
+        auto element = tileset_begin;
+        for (auto i = pattern.begin(); i != pattern.end() && element < tileset_end; i++)
+        {
+            if (*i != *element++)
+            {
+                return false;
+            }
+        }
 
-        return memcmp(
-            pattern.data(),
-            tileset.data() + offset,
-            min(pattern.size(), remaining_tileset) * sizeof(unsigned int)) == 0;
+        return true;
     }
 
-    void pad(
-        const dwords& source,
-        dwords& destination,
-        const function<void(const dwords&, dwords&, size_t)>& copy_function)
+    mech_match &mech_match::instance()
     {
-        for (size_t i = 0; i + source.size() <= destination.size(); i += source.size())
-        {
-            copy_function(source, destination, i);
-        }
+        static mech_match instance;
+
+        return instance;
+    }
+
+    bool mech_match::matches(const dwords &pattern, dwords::const_iterator tileset_begin) const
+    {
+        return 0 == memcmp(
+            pattern.data(),
+            &(*tileset_begin),
+            pattern.size() * sizeof(dword));
+    }
+
+    bool mech_match::matches_at_end(const dwords &pattern, dwords::const_iterator tileset_begin, dwords::const_iterator tileset_end) const
+    {
+        const size_t tileset_remaining = tileset_end > tileset_begin
+            ? tileset_end - tileset_begin
+            : 0;
+
+        return 0 == memcmp(
+            pattern.data(),
+            &(*tileset_begin),
+            min(pattern.size(), tileset_remaining) * sizeof(dword));
     }
 
     bool accu(

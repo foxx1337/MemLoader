@@ -1,9 +1,7 @@
 #include "MemoryFunctions.h"
 
 #include <algorithm>
-#include <functional>
 
-using std::function;
 using std::min;
 
 namespace MemLoader {
@@ -207,21 +205,4 @@ namespace MemLoader {
             &(*tileset_begin),
             min(pattern.size(), tileset_remaining) * sizeof(dword));
     }
-
-    bool accu(
-        const dwords& pattern,
-        const dwords& tileset,
-        const function<bool(const dwords&, const dwords&, size_t)>& equals_function)
-    {
-        for (size_t i = 0; i + pattern.size() <= tileset.size(); i += pattern.size())
-        {
-            if (!equals_function(pattern, tileset, i))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
 }

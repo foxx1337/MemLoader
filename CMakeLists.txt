@@ -15,3 +15,7 @@ enable_testing()
 add_subdirectory("MemoryFunctions")
 add_subdirectory("CopyCompareBench")
 add_subdirectory("experiments")
+
+include_directories("${MemoryFunctions_SOURCE_DIR}")
+
+add_executable(MemLoader "src/MemLoader.cpp" "src/pattern.h")

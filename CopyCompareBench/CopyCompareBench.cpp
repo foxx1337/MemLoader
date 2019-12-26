@@ -16,7 +16,7 @@ using namespace MemLoader;
 void generate_pattern(dwords &pattern)
 {
     unsigned char b = 0;
-    for (auto& element : pattern)
+    for (auto &element : pattern)
     {
         unsigned int value = 0;
         for (int i = 0; i < 4; i++)

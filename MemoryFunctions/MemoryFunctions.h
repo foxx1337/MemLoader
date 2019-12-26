@@ -5,6 +5,7 @@
 
 namespace MemLoader
 {
+    typedef unsigned char byte;
     typedef unsigned int dword;
     typedef std::vector<dword> dwords;
 

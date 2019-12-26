@@ -12,6 +12,6 @@ set(CMAKE_CXX_EXTENSIONS NO)
 enable_testing()
 
 # Include sub-projects.
+add_subdirectory("MemoryFunctions")
 add_subdirectory("CopyCompareBench")
-
 add_subdirectory("experiments")

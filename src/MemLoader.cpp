@@ -9,7 +9,7 @@ int main()
 {
     cout << "Hello" << endl;
 
-    count_pattern pat();
+    count_pattern pat;
     
     return 0;
 }

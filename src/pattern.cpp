@@ -9,6 +9,18 @@ namespace BitPatterns
     using MemLoader::dwords;
     using std::fill;
 
+    bool all_equal(const dwords &memory, dword sample)
+    {
+        for (auto element : memory)
+        {
+            if (element != sample)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
     void count_pattern::calculate_frame()
     {
         byte b = 0;
@@ -64,64 +76,60 @@ namespace BitPatterns
 
     void advancing_ones::calculate_frame()
     {
-        const dword element = 1 << current_frame_;
-        fill(pattern_.begin(), pattern_.end(), element);
+        const dword sample = 1 << current_frame_;
+        fill(pattern_.begin(), pattern_.end(), sample);
     }
 
     bool advancing_ones::is_valid_frame(const MemLoader::dwords &pattern)
     {
-        const dword hay = 1 << current_frame_;
-        for (auto element : pattern)
-        {
-            if (element != hay)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        const dword sample = 1 << current_frame_;
+        return all_equal(pattern, sample);
     }
 
     void advancing_zeroes::calculate_frame()
     {
-        const dword element = ~(1 << current_frame_);
-        fill(pattern_.begin(), pattern_.end(), element);
+        const dword sample = ~(1 << current_frame_);
+        fill(pattern_.begin(), pattern_.end(), sample);
     }
 
     bool advancing_zeroes::is_valid_frame(const MemLoader::dwords &pattern)
     {
-        const dword hay = ~(1 << current_frame_);
-        for (auto element : pattern_)
-        {
-            if (element != hay)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        const dword sample = ~(1 << current_frame_);
+        return all_equal(pattern, sample);
     }
 
     void inversions::calculate_frame()
     {
-        const dword element = current_frame_ % 2 == 0 ? 0 : ~0;
-        fill(pattern_.begin(), pattern_.end(), element);
+        const dword sample = current_frame_ % 2 == 0 ? 0 : ~0;
+        fill(pattern_.begin(), pattern_.end(), sample);
     }
 
     bool inversions::is_valid_frame(const MemLoader::dwords &pattern)
     {
-        const dword hay = current_frame_ % 2 == 0 ? 0 : ~0;
-        for (auto element : pattern_)
-        {
-            if (element != hay)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        const dword sample = current_frame_ % 2 == 0 ? 0 : ~0;
+        return all_equal(pattern, sample);
     }
 
+    void checkerboard::calculate_frame()
+    {
+        const dword sample = make_pattern() << (current_frame_ % 2);
+        fill(pattern_.begin(), pattern_.end(), sample);
+    }
 
+    bool checkerboard::is_valid_frame(const MemLoader::dwords &pattern)
+    {
+        const dword sample = make_pattern() << (current_frame_ % 2);
+        return all_equal(pattern, sample);
+    }
 
+    dword checkerboard::make_pattern()
+    {
+        MemLoader::dword sample = 0;
+        for (size_t i = 0; i < 32; i += 2)
+        {
+            sample = (sample << 2) | 1;
+        }
+
+        return sample;
+    }
 }

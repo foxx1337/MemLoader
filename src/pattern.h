@@ -60,6 +60,7 @@ namespace BitPatterns
 
     class count_pattern : public pattern<1>
     {
+    public:
         std::string name() override { return "byte counter, four per dword"; }
         void calculate_frame() override;
         bool is_valid_frame(const MemLoader::dwords &pattern) override;
@@ -67,6 +68,7 @@ namespace BitPatterns
 
     class advancing_ones : public pattern<32>
     {
+    public:
         std::string name() override { return "advancing ones"; }
         void calculate_frame() override;
         bool is_valid_frame(const MemLoader::dwords &pattern) override;
@@ -74,6 +76,7 @@ namespace BitPatterns
 
     class advancing_zeroes : public pattern<32>
     {
+    public:
         std::string name() override { return "advancing zeroes"; }
         void calculate_frame() override;
         bool is_valid_frame(const MemLoader::dwords &pattern) override;
@@ -81,9 +84,21 @@ namespace BitPatterns
 
     class inversions : public pattern<2>
     {
+    public:
         std::string name() override { return "inversions: 000 -> 111"; };
         void calculate_frame() override;
         bool is_valid_frame(const MemLoader::dwords &pattern) override;
+    };
+
+    class checkerboard : public pattern<2>
+    {
+    public:
+        std::string name() override { return "checkerboard"; }
+        void calculate_frame() override;
+        bool is_valid_frame(const MemLoader::dwords &pattern) override;
+
+    private:
+        static MemLoader::dword make_pattern();
     };
 }
 #endif // MEMLOADER_PATTERN_H_

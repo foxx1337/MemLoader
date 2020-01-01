@@ -10,14 +10,27 @@ using namespace std;
 using namespace MemLoader;
 using namespace BitPatterns;
 
-struct run
+struct pass;
+
+struct hot_spot
+{
+    const pass &pass;
+    size_t iteration;
+    size_t frame;
+
+    bool is_success() const;
+};
+
+typedef void (*progress_callback)(const hot_spot &spot);
+
+struct pass
 {
     unique_ptr<pattern> pattern;
     size_t repetitions;
 
-    static const run none;
+    static const pass none;
 
-    bool execute(dwords::iterator memory_begin, dwords::iterator memory_end) const
+    hot_spot execute_one(dwords::iterator memory_begin, dwords::iterator memory_end, size_t iteration, progress_callback callback) const
     {
         pattern->reset_frame();
         while (pattern->current_frame() < pattern->total_frames())
@@ -31,74 +44,77 @@ struct run
                 !pattern->is_valid_frame(frame)
                 || !match_method::accu(frame, memory_begin, memory_end, std_match::instance());
 
+            const hot_spot here{ *this, iteration ,pattern->current_frame() };
+
             if (has_crashed)
             {
-                return false;
+                return here;
             }
-            
+
+            callback(here);
+
             pattern->advance_current_frame();
         }
-
-        return true;
+        return { pass::none, 0, 0 };
     }
-};
 
-const run run::none = { unique_ptr<BitPatterns::pattern>(), 0 };
-
-struct hot_spot
-{
-    const run &the_run;
-    size_t the_iteration;
-
-    bool is_success() const
+    hot_spot execute(dwords::iterator memory_begin, dwords::iterator memory_end, progress_callback callback) const
     {
-        return &the_run == &run::none;
+        for (size_t repetition = 0; repetition < repetitions; ++repetition)
+        {
+            const hot_spot result = execute_one(memory_begin, memory_end, repetition, callback);
+
+            if (!result.is_success())
+            {
+                return result;
+            }
+        }
+
+        return { pass::none, 0, 0 };
     }
 };
+
+const pass pass::none = { unique_ptr<BitPatterns::pattern>(), 0 };
+
+bool hot_spot::is_success() const
+{
+    return &(hot_spot::pass) == &pass::none;
+}
 
 class execution_plan
 {
 public:
     execution_plan()
     {
-        runs_.push_back({ unique_ptr<pattern>(new count_pattern), 1 });
-        runs_.push_back({ unique_ptr<pattern>(new advancing_ones), 2 });
-        runs_.push_back({ unique_ptr<pattern>(new advancing_zeroes), 2 });
-        runs_.push_back({ unique_ptr<pattern>(new inversions), 4 });
-        runs_.push_back({ unique_ptr<pattern>(new checkerboard), 4 });
+        passes_.push_back({ unique_ptr<pattern>(new count_pattern), 1 });
+        passes_.push_back({ unique_ptr<pattern>(new advancing_ones), 2 });
+        passes_.push_back({ unique_ptr<pattern>(new advancing_zeroes), 2 });
+        passes_.push_back({ unique_ptr<pattern>(new inversions), 4 });
+        passes_.push_back({ unique_ptr<pattern>(new checkerboard), 4 });
     }
 
-    const vector<run> &runs() const
+    const vector<pass> &passes() const
     {
-        return runs_;
+        return passes_;
     }
 
-    typedef void (*log_intermediate_stage)(const hot_spot &spot);
-
-    hot_spot execute(dwords::iterator memory_begin, dwords::iterator memory_end, log_intermediate_stage callback) const
+    hot_spot execute(dwords::iterator memory_begin, dwords::iterator memory_end, progress_callback callback) const
     {
-        for (const auto &the_run : runs_)
+        for (const auto &the_pass : passes_)
         {
-            for (size_t r = 0; r < the_run.repetitions; ++r)
+            const hot_spot result = the_pass.execute(memory_begin, memory_end, callback);
+
+            if (!result.is_success())
             {
-                const bool has_crashed = !the_run.execute(memory_begin, memory_end);
-
-                if (has_crashed)
-                {
-                    return { the_run, r };
-                }
-
-                if (callback != nullptr)
-                {
-                    callback({ the_run, r });
-                }
+                return result;
             }
         }
-        return { run::none, 0 };
+
+        return { pass::none, 0, 0 };
     }
 
 private:
-    vector<run> runs_;
+    vector<pass> passes_;
 };
 
 
@@ -106,19 +122,22 @@ private:
 int main()
 {
     const execution_plan plan;
-    dwords memory(1024ull * 1024ull * 1024ull);
+    dwords memory(1024ull * 1024ull * 256ull);
 
     hot_spot result = plan.execute(memory.begin(), memory.end(),
         [](const hot_spot &spot)
         {
-            cout << spot.the_run.pattern->name() << " ||| "
-                << spot.the_iteration + 1 << '/' << spot.the_run.repetitions << endl;
+            cout << spot.pass.pattern->name() << " ||| iter "
+                << spot.iteration + 1 << '/' << spot.pass.repetitions
+                << " frame " << spot.frame << '/'
+                << spot.pass.pattern->total_frames() << endl;
+
         });
 
     if (!result.is_success())
     {
-        cerr << "Failure in " << result.the_run.pattern->name() << " ||| "
-            << result.the_iteration + 1 << '/' << result.the_run.repetitions << endl;
+        cerr << "Failure in " << result.pass.pattern->name() << " ||| "
+            << result.iteration + 1 << '/' << result.pass.repetitions << endl;
     }
     
     return 0;

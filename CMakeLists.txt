@@ -22,3 +22,5 @@ add_executable(MemLoader
     "src/MemLoader.cpp"
     "src/pattern.cpp"
     "src/pattern.h")
+
+target_link_libraries(MemLoader MemoryFunctions)

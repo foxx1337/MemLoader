@@ -11,7 +11,7 @@ namespace BitPatterns
     class pattern
     {
     public:
-        pattern(size_t frame_count, std::string name, size_t size = 256)  :
+        pattern(size_t frame_count, std::string name, size_t size = 1024 * 1024)  :
             size_(size),
             total_frames_(frame_count),
             current_frame_(0),
@@ -35,6 +35,11 @@ namespace BitPatterns
 
         virtual ~pattern() = default;
 
+        size_t size() const
+        {
+            return size_;
+        }
+
         size_t total_frames() const
         {
             return total_frames_;
@@ -48,11 +53,16 @@ namespace BitPatterns
         void advance_current_frame()
         {
             ++current_frame_;
+        }
 
-            if (current_frame_ == total_frames_)
-            {
-                current_frame_ = 0;
-            }
+        void reset_frame()
+        {
+            current_frame_ = 0;
+        }
+
+        const MemLoader::dwords &get() const
+        {
+            return pattern_;
         }
 
         std::string name() const

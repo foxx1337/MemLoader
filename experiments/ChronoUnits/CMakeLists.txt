@@ -1,3 +1,4 @@
 project(ChronoUnits)
 
-add_executable(ChronoUnits "ChronoUnits.cpp")
+add_executable(ChronoUnits
+    ChronoUnits.cpp)

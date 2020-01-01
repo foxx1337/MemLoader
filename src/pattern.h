@@ -2,28 +2,38 @@
 #define MEMLOADER_PATTERN_H_
 
 #include <string>
+#include <utility>
 
 #include "MemoryFunctions.h"
 
 namespace BitPatterns
 {
-    template <size_t frame_count> class pattern
+    class pattern
     {
     public:
-        pattern(size_t size = 256) :
+        pattern(size_t frame_count, std::string name, size_t size = 256)  :
             size_(size),
             total_frames_(frame_count),
-            current_frame_(0)
+            current_frame_(0),
+            name_(std::move(name))
         {
             pattern_.resize(size_);
         }
 
-        pattern(const pattern &) = delete;
-        pattern(pattern &&) = delete;
+        pattern(const pattern &old) = default;
+        pattern(pattern &&old) noexcept :
+            size_(old.size_),
+            total_frames_(old.total_frames_),
+            current_frame_(old.current_frame_),
+            pattern_(std::move(old.pattern_)),
+            name_(std::move(old.name_))
+        {
+        }
+
         pattern &operator=(const pattern &) = delete;
         pattern &operator=(pattern &&) = delete;
 
-        virtual ~pattern() = 0;
+        virtual ~pattern() = default;
 
         size_t total_frames() const
         {
@@ -45,7 +55,10 @@ namespace BitPatterns
             }
         }
 
-        virtual std::string name() = 0;
+        std::string name() const
+        {
+            return name_;
+        }
 
         virtual void calculate_frame() = 0;
 
@@ -56,44 +69,45 @@ namespace BitPatterns
         const size_t total_frames_;
         size_t current_frame_;
         MemLoader::dwords pattern_;
+        std::string name_;
     };
 
-    class count_pattern : public pattern<1>
+    class count_pattern : public pattern
     {
     public:
-        std::string name() override { return "byte counter, four per dword"; }
+        count_pattern() : pattern(1, "byte counter, four per dword") { }
         void calculate_frame() override;
         bool is_valid_frame(const MemLoader::dwords &pattern) override;
     };
 
-    class advancing_ones : public pattern<32>
+    class advancing_ones : public pattern
     {
     public:
-        std::string name() override { return "advancing ones"; }
+        advancing_ones() : pattern(32, "advancing ones") { }
         void calculate_frame() override;
         bool is_valid_frame(const MemLoader::dwords &pattern) override;
     };
 
-    class advancing_zeroes : public pattern<32>
+    class advancing_zeroes : public pattern
     {
     public:
-        std::string name() override { return "advancing zeroes"; }
+        advancing_zeroes() : pattern(32, "advancing zeroes") { }
         void calculate_frame() override;
         bool is_valid_frame(const MemLoader::dwords &pattern) override;
     };
 
-    class inversions : public pattern<2>
+    class inversions : public pattern
     {
     public:
-        std::string name() override { return "inversions: 000 -> 111"; };
+        inversions() : pattern(2, "inversions: 000 -> 111") { }
         void calculate_frame() override;
         bool is_valid_frame(const MemLoader::dwords &pattern) override;
     };
 
-    class checkerboard : public pattern<2>
+    class checkerboard : public pattern
     {
     public:
-        std::string name() override { return "checkerboard"; }
+        checkerboard() : pattern(2, "checkerboard") { }
         void calculate_frame() override;
         bool is_valid_frame(const MemLoader::dwords &pattern) override;
 

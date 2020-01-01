@@ -18,4 +18,7 @@ add_subdirectory("experiments")
 
 include_directories("${MemoryFunctions_SOURCE_DIR}")
 
-add_executable(MemLoader "src/MemLoader.cpp" "src/pattern.h")
+add_executable(MemLoader
+    "src/MemLoader.cpp"
+    "src/pattern.cpp"
+    "src/pattern.h")

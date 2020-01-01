@@ -1,7 +1,9 @@
 #include "MemoryFunctions.h"
 
+#include <iterator>
 #include <algorithm>
 
+using std::distance;
 using std::min;
 
 namespace MemLoader {
@@ -22,7 +24,7 @@ namespace MemLoader {
     {
         auto destination = destination_begin;
 
-        while (destination + source.size() <= destination_end)
+        while (distance(destination ,destination_end) >= source.size())
         {
             copier.copy(source, destination);
             destination += source.size();
@@ -110,7 +112,7 @@ namespace MemLoader {
     {
         auto tileset = tileset_begin;
 
-        while (tileset + pattern.size() <= tileset_end)
+        while (distance(tileset, tileset_end) >= pattern.size())
         {
             if (!matcher.matches(pattern, tileset))
             {

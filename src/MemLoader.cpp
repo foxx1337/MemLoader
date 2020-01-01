@@ -122,22 +122,23 @@ private:
 int main()
 {
     const execution_plan plan;
-    dwords memory(1024ull * 1024ull * 256ull);
+    dwords memory(1024ull * 1024ull * 1024ull);
 
     hot_spot result = plan.execute(memory.begin(), memory.end(),
         [](const hot_spot &spot)
         {
             cout << spot.pass.pattern->name() << " ||| iter "
                 << spot.iteration + 1 << '/' << spot.pass.repetitions
-                << " frame " << spot.frame << '/'
+                << " frame " << spot.frame + 1 << '/'
                 << spot.pass.pattern->total_frames() << endl;
-
         });
 
     if (!result.is_success())
     {
-        cerr << "Failure in " << result.pass.pattern->name() << " ||| "
-            << result.iteration + 1 << '/' << result.pass.repetitions << endl;
+        cerr << "Failure in " << result.pass.pattern->name() << " ||| iter "
+            << result.iteration + 1 << '/' << result.pass.repetitions
+            << " frame " << result.frame + 1 << ' '
+            << result.pass.pattern->total_frames() << endl;
     }
     
     return 0;

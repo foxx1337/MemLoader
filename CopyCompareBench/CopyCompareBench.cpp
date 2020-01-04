@@ -7,7 +7,7 @@
 #include <thread>
 
 #include "MemoryFunctions.h"
-#include "TimedExecutor.h"
+#include "../src/TimedExecutor.h"
 #include <algorithm>
 
 using namespace std;

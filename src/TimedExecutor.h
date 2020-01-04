@@ -7,7 +7,7 @@
 class auto_timer
 {
 public:
-    auto_timer(std::chrono::high_resolution_clock::duration& duration) :
+    auto_timer(std::chrono::high_resolution_clock::duration &duration) :
         start(std::chrono::high_resolution_clock::now()),
         duration(duration)
     {
@@ -22,7 +22,7 @@ public:
 
 private:
     const std::chrono::steady_clock::time_point start;
-    std::chrono::high_resolution_clock::duration& duration;
+    std::chrono::high_resolution_clock::duration &duration;
 };
 
 class timed_executor

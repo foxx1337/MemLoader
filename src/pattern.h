@@ -11,7 +11,9 @@ namespace BitPatterns
     class pattern
     {
     public:
-        pattern(size_t frame_count, std::string name, size_t size = 1024 * 1024)  :
+        static const size_t default_size = 1024 * 1024;
+
+        pattern(size_t frame_count, std::string name, size_t size = default_size)  :
             size_(size),
             total_frames_(frame_count),
             current_frame_(0),

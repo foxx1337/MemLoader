@@ -23,14 +23,7 @@ namespace BitPatterns
         }
 
         pattern(const pattern &old) = default;
-        pattern(pattern &&old) noexcept :
-            size_(old.size_),
-            total_frames_(old.total_frames_),
-            current_frame_(old.current_frame_),
-            pattern_(std::move(old.pattern_)),
-            name_(std::move(old.name_))
-        {
-        }
+        pattern(pattern &&old) noexcept = default;
 
         pattern &operator=(const pattern &) = delete;
         pattern &operator=(pattern &&) = delete;

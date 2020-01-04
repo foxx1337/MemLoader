@@ -10,6 +10,7 @@
 #include "pattern.h"
 #include <algorithm>
 #include <mutex>
+#include <optional>
 
 using namespace std;
 using namespace MemLoader;
@@ -24,8 +25,6 @@ struct hot_spot
     size_t frame;
     size_t thread_id;
     bool is_interrupted;
-
-    bool is_success() const;
 };
 
 typedef function<bool()> continuator_callback;
@@ -36,9 +35,7 @@ struct pass
     unique_ptr<pattern> pattern;
     size_t repetitions;
 
-    static const pass none;
-
-    hot_spot execute_one(dwords::iterator memory_begin, dwords::iterator memory_end,
+    optional<hot_spot> execute_one(dwords::iterator memory_begin, dwords::iterator memory_end, 
         size_t iteration, size_t thread_id, progress_callback callback,
         continuator_callback can_continue) const
     {
@@ -70,34 +67,27 @@ struct pass
 
             pattern->advance_current_frame();
         }
-        return { pass::none, 0, 0 };
+        return optional<hot_spot>();
     }
 
-    hot_spot execute(dwords::iterator memory_begin, dwords::iterator memory_end,
+    optional<hot_spot> execute(dwords::iterator memory_begin, dwords::iterator memory_end,
         size_t thread_id, progress_callback callback,
         continuator_callback can_continue) const
     {
         for (size_t repetition = 0; repetition < repetitions; ++repetition)
         {
-            const hot_spot result = execute_one(memory_begin, memory_end,
+            auto result = execute_one(memory_begin, memory_end,
                 repetition, thread_id, callback, can_continue);
 
-            if (!result.is_success())
+            if (result.has_value())
             {
                 return result;
             }
         }
 
-        return { pass::none, 0, 0, thread_id, false };
+        return optional<hot_spot>();
     }
 };
-
-const pass pass::none = { unique_ptr<BitPatterns::pattern>(), 0 };
-
-bool hot_spot::is_success() const
-{
-    return &(hot_spot::pass) == &pass::none;
-}
 
 class execution_plan
 {
@@ -116,21 +106,21 @@ public:
         return passes_;
     }
 
-    hot_spot execute(dwords::iterator memory_begin, dwords::iterator memory_end, size_t thread_id,
+    optional<hot_spot> execute(dwords::iterator memory_begin, dwords::iterator memory_end, size_t thread_id,
         progress_callback callback, continuator_callback can_continue) const
     {
         for (const auto &the_pass : passes_)
         {
-            const hot_spot result = the_pass.execute(memory_begin, memory_end,
+            auto result = the_pass.execute(memory_begin, memory_end,
                 thread_id, callback, can_continue);
 
-            if (!result.is_success())
+            if (result.has_value())
             {
                 return result;
             }
         }
 
-        return { pass::none, 0, 0 };
+        return optional<hot_spot>();
     }
 
 private:
@@ -160,14 +150,14 @@ void memload_threaded(size_t block_size, size_t num_threads,
             [&m, &crashed, start, stop, i, callback]()
             {
                 execution_plan plan;
-                hot_spot here = plan.execute(start, stop, i, callback, 
+                auto result = plan.execute(start, stop, i, callback, 
                     [&m, &crashed]()
                     {
                         unique_lock<mutex> lock(m);
                         return !crashed;
                     });
 
-                if (!here.is_success())
+                if (result.has_value())
                 {
                     unique_lock<mutex> lock(m);
                     crashed = true;
@@ -185,7 +175,6 @@ void memload_threaded(size_t block_size, size_t num_threads,
 
 void log_progress(const hot_spot &spot)
 {
-    
     cout << spot.thread_id << ": " << spot.pass.pattern->name() << " ||| iter "
         << spot.iteration + 1 << '/' << spot.pass.repetitions
         << " frame " << spot.frame + 1 << '/'
@@ -199,7 +188,7 @@ void no_log(const hot_spot &spot)
 
 int main()
 {
-    dwords memory(1024ull * 1024ull * 1024ull);
+    dwords memory(1024ull * 1024ull * 256ull);
 
     for (size_t i = 1; i <= 24; i++)
     {

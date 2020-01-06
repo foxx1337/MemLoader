@@ -1,9 +1,5 @@
 project(CopyCompareBench)
 
-include_directories("${MemoryFunctions_SOURCE_DIR}")
+add_executable(CopyCompareBench "CopyCompareBench.cpp")
 
-add_executable(CopyCompareBench
-    "CopyCompareBench.cpp"
-    "../src/TimedExecutor.h")
-
-target_link_libraries(CopyCompareBench MemoryFunctions)
+target_link_libraries(CopyCompareBench MemoryFunctions TimedExecutor)

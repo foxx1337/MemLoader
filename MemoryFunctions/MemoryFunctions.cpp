@@ -6,7 +6,8 @@
 using std::distance;
 using std::min;
 
-namespace MemLoader {
+namespace MemLoader
+{
     dwords::const_iterator clamp_to_second_end(
         const dwords &first,
         dwords::const_iterator second_begin,

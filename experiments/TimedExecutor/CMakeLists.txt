@@ -1,4 +1,4 @@
-project(TimedExecutor)
+project(TimedExecutorExperiment)
 
-add_executable(TimedExecutor
+add_executable(TimedExecutorExperiment
     TimedExecutor.cpp)

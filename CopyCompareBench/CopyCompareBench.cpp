@@ -5,10 +5,10 @@
 #include <vector>
 #include <chrono>
 #include <thread>
+#include <algorithm>
 
 #include "MemoryFunctions.h"
-#include "../src/TimedExecutor.h"
-#include <algorithm>
+#include "TimedExecutor.h"
 
 using namespace std;
 using namespace MemLoader;

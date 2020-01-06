@@ -6,6 +6,7 @@ find_package(GTest CONFIG REQUIRED)
 add_library(MemoryFunctions
     "MemoryFunctions.cpp"
     "MemoryFunctions.h")
+target_include_directories(MemoryFunctions PUBLIC "${MemoryFunctions_SOURCE_DIR}")
 
 add_executable(MemoryFunctions_Tests
     "tests.cpp"

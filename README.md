@@ -19,4 +19,23 @@
 
       or, for msvc under Windows, by adding the variable to `CMakeSettings.json` as specified
       in the
-      [`vcpkg` docs](https://vcpkg.readthedocs.io/en/latest/examples/installing-and-using-packages/#cmake-toolchain-file)
+      [`vcpkg` docs](https://vcpkg.readthedocs.io/en/latest/examples/installing-and-using-packages/#cmake-toolchain-file):
+      
+      ```json
+      "variables": [
+          {
+              "name": "CMAKE_TOOLCHAIN_FILE",
+              "value": "d:\\src\\C\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
+          },
+          {
+              "name": "CMAKE_VERBOSE_MAKEFILE",
+              "value": "TRUE"
+          },
+          {
+              "name": "BUILD_EXPERIMENTS",
+              "value": "TRUE"
+          }
+      ]
+      ```
+
+To include the `experiments` project also pass `-DBUILD_EXPERIMENTS=True` to `cmake`.

@@ -1,93 +1,20 @@
-#include <memory>
-#include <vector>
 #include <thread>
-#include <functional>
 #include <chrono>
 #include <iostream>
+#include <algorithm>
+#include <mutex>
+
+#include "pattern.h"
+#include "hot_spot.h"
+#include "pass.h"
+#include "memory_helpers.h"
 
 #include "MemoryFunctions.h"
 #include "TimedExecutor.h"
-#include "pattern.h"
-#include <algorithm>
-#include <mutex>
-#include <optional>
 
 using namespace std;
 using namespace MemLoader;
 using namespace BitPatterns;
-
-struct pass;
-
-struct hot_spot
-{
-    const pass &pass;
-    size_t iteration;
-    size_t frame;
-    size_t thread_id;
-    bool is_interrupted;
-};
-
-typedef function<bool()> continuator_callback;
-typedef function<void(const hot_spot &)> progress_callback;
-
-struct pass
-{
-    unique_ptr<pattern> pattern;
-    size_t repetitions;
-
-    optional<hot_spot> execute_one(dwords::iterator memory_begin, dwords::iterator memory_end, 
-        size_t iteration, size_t thread_id, progress_callback callback,
-        continuator_callback can_continue) const
-    {
-        pattern->reset_frame();
-        while (pattern->current_frame() < pattern->total_frames())
-        {
-            pattern->calculate_frame();
-            dwords frame = pattern->get();
-
-            const hot_spot here{ *this, iteration ,pattern->current_frame(), thread_id, !can_continue() };
-
-            if (here.is_interrupted)
-            {
-                return here;
-            }
-
-            copy_method::pad(frame, memory_begin, memory_end, std_copy::instance());
-
-            const bool has_crashed =
-                !pattern->is_valid_frame(frame)
-                || !match_method::accu(frame, memory_begin, memory_end, std_match::instance());
-
-            if (has_crashed)
-            {
-                return here;
-            }
-
-            callback(here);
-
-            pattern->advance_current_frame();
-        }
-        return optional<hot_spot>();
-    }
-
-    optional<hot_spot> execute(dwords::iterator memory_begin, dwords::iterator memory_end,
-        size_t thread_id, progress_callback callback,
-        continuator_callback can_continue) const
-    {
-        for (size_t repetition = 0; repetition < repetitions; ++repetition)
-        {
-            auto result = execute_one(memory_begin, memory_end,
-                repetition, thread_id, callback, can_continue);
-
-            if (result.has_value())
-            {
-                return result;
-            }
-        }
-
-        return optional<hot_spot>();
-    }
-};
 
 class execution_plan
 {
@@ -161,6 +88,11 @@ void memload_threaded(size_t block_size, size_t num_threads,
                 {
                     unique_lock<mutex> lock(m);
                     crashed = true;
+
+                    if (!result->is_interrupted)
+                    {
+                        cerr << "Crashed in thread " << result.value() << endl;
+                    }
                 }
             }));
 
@@ -175,10 +107,7 @@ void memload_threaded(size_t block_size, size_t num_threads,
 
 void log_progress(const hot_spot &spot)
 {
-    cout << spot.thread_id << ": " << spot.pass.pattern->name() << " ||| iter "
-        << spot.iteration + 1 << '/' << spot.pass.repetitions
-        << " frame " << spot.frame + 1 << '/'
-        << spot.pass.pattern->total_frames() << endl;
+    cout << spot << endl;
 }
 
 void no_log(const hot_spot &spot)
@@ -188,7 +117,9 @@ void no_log(const hot_spot &spot)
 
 int main()
 {
+    cout << "Available memory: " << humanize_size(truncate(get_free_memory(), kb)) << endl;
     dwords memory(1024ull * 1024ull * 256ull);
+    cout << "Available memory: " << humanize_size(truncate(get_free_memory(), kb)) << endl;
 
     for (size_t i = 1; i <= 24; i++)
     {

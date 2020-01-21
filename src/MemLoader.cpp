@@ -76,7 +76,7 @@ void memload_threaded(size_t block_size, size_t num_threads,
         workers.emplace_back(thread(
             [&m, &crashed, start, stop, i, callback]()
             {
-                execution_plan plan;
+                const execution_plan plan;
                 auto result = plan.execute(start, stop, i, callback, 
                     [&m, &crashed]()
                     {
@@ -117,9 +117,16 @@ void no_log(const hot_spot &spot)
 
 int main()
 {
-    cout << "Available memory: " << humanize_size(truncate(get_free_memory(), kb)) << endl;
-    dwords memory(1024ull * 1024ull * 256ull);
-    cout << "Available memory: " << humanize_size(truncate(get_free_memory(), kb)) << endl;
+    cout << "Available memory before applying pressure: "
+        << humanize_size(truncate(get_free_memory(), kb)) << endl;
+
+    size_t ram = apply_pressure(get_free_memory());
+    cout << "Pressure allocated: " << humanize_size(ram) << endl;
+    cout << "Available now: " << humanize_size(truncate(get_free_memory(), kb)) << endl;
+    //dwords memory(1024ull * 1024ull * 256ull);
+
+    dwords memory((get_free_memory() - 24 * 1024 * 1024) / 4);
+    cout << "After allocating: " << humanize_size(truncate(get_free_memory(), kb)) << endl;
 
     for (size_t i = 1; i <= 24; i++)
     {

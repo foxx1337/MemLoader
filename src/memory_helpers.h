@@ -9,6 +9,8 @@ enum memory_size
 };
 
 size_t get_free_memory();
+size_t apply_pressure(size_t max_size);
+
 size_t truncate(size_t size, memory_size precision);
 std::string humanize_size(size_t size);
 

@@ -74,7 +74,7 @@ namespace BitPatterns
         const size_t total_frames_;
         size_t current_frame_;
         MemLoader::dwords pattern_;
-        std::string name_;
+        const std::string name_;
     };
 
     class count_pattern : public pattern

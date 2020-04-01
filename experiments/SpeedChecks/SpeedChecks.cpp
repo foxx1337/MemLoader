@@ -7,12 +7,12 @@ class auto_timer
 public:
     auto_timer()
     {
-        start = std::chrono::high_resolution_clock::now();
+        start = std::chrono::steady_clock::now();
     }
 
     ~auto_timer()
     {
-        std::chrono::steady_clock::time_point stop = std::chrono::high_resolution_clock::now();
+        std::chrono::steady_clock::time_point stop = std::chrono::steady_clock::now();
         const auto result = stop - start;
         std::cout << "Operation took " << result.count() << std::endl;
         const std::chrono::duration<double> dResult = stop - start;

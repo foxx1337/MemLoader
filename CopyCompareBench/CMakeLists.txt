@@ -2,4 +2,5 @@ project(CopyCompareBench)
 
 add_executable(CopyCompareBench "CopyCompareBench.cpp")
 
-target_link_libraries(CopyCompareBench MemoryFunctions TimedExecutor)
+find_package(Threads)
+target_link_libraries(CopyCompareBench MemoryFunctions TimedExecutor ${CMAKE_THREAD_LIBS_INIT})

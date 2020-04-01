@@ -1,10 +1,11 @@
 #include "MemoryFunctions.h"
 
-#include <iterator>
 #include <algorithm>
+#include <cstring>
 
 using std::distance;
 using std::min;
+using std::memcpy;
 
 namespace MemLoader
 {

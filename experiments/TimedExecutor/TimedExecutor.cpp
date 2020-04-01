@@ -7,7 +7,7 @@ class auto_timer
 {
 public:
     auto_timer(std::chrono::high_resolution_clock::duration &duration) :
-        start(std::chrono::high_resolution_clock::now()),
+        start(std::chrono::steady_clock::now()),
         duration(duration)
     {
         // nothing to do here
@@ -15,7 +15,7 @@ public:
 
     ~auto_timer()
     {
-        const std::chrono::steady_clock::time_point stop = std::chrono::high_resolution_clock::now();
+        const std::chrono::steady_clock::time_point stop = std::chrono::steady_clock::now();
         duration = stop - start;
     }
 

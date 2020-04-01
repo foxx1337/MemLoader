@@ -9,7 +9,7 @@ namespace MemLoader
 
     struct hot_spot
     {
-        const pass &pass;
+        const struct pass &pass;
         size_t iteration;
         size_t frame;
         size_t thread_id;

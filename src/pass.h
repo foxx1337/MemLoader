@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <functional>
+#include <memory>
 
 #include "pattern.h"
 #include "hot_spot.h"

@@ -40,6 +40,7 @@ elseif(UNIX)
     list(APPEND cpp_files "src/posix/platform_memory.cpp")
 endif()
 
+find_package(Threads)
 add_executable(MemLoader ${cpp_files} ${h_files})
 
-target_link_libraries(MemLoader MemoryFunctions TimedExecutor)
+target_link_libraries(MemLoader MemoryFunctions TimedExecutor ${CMAKE_THREAD_LIBS_INIT})

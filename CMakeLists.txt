@@ -19,15 +19,14 @@ if (BUILD_EXPERIMENTS)
     add_subdirectory("experiments")
 endif()
 
-set(cpp_files
-    "src/MemLoader.cpp"
+set(cpp_files_core
     "src/pattern.cpp"
     "src/hot_spot.cpp"
     "src/pass.cpp"
     "src/memory_helpers.cpp"
 )
 
-set(h_files
+set(h_files_core
     "src/pattern.h"
     "src/hot_spot.h"
     "src/pass.h"
@@ -35,12 +34,12 @@ set(h_files
 )
 
 if(WIN32)
-    list(APPEND cpp_files "src/win/platform_memory.cpp")
+    list(APPEND cpp_files_core "src/win/platform_memory.cpp")
 elseif(UNIX)
-    list(APPEND cpp_files "src/posix/platform_memory.cpp")
+    list(APPEND cpp_files_core "src/posix/platform_memory.cpp")
 endif()
 
-add_executable(MemLoader ${cpp_files} ${h_files})
+add_executable(MemLoaderCliBench "src/MemLoaderCliBench.cpp" ${cpp_files_core} ${h_files_core})
 
 find_package(Threads)
-target_link_libraries(MemLoader MemoryFunctions TimedExecutor ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(MemLoaderCliBench MemoryFunctions TimedExecutor ${CMAKE_THREAD_LIBS_INIT})

@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/MemLoader">
+        <file>images/MemLoader.svg</file>
+    </qresource>
+</RCC>

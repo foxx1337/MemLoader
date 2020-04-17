@@ -37,5 +37,6 @@
           }
       ]
       ```
+3. (optional) QT5 libraries, when specifying `-DBUILD_MEMLOADER_GUI=True` to `cmake`.
 
 To include the `experiments` project also pass `-DBUILD_EXPERIMENTS=True` to `cmake`.

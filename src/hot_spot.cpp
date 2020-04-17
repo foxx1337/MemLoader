@@ -1,4 +1,5 @@
 #include "hot_spot.h"
+
 #include "pass.h"
 
 using std::ostream;

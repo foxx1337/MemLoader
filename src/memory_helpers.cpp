@@ -3,7 +3,6 @@
 #include <memory>
 #include <vector>
 
-
 using std::make_unique;
 using std::string;
 using std::to_string;

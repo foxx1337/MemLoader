@@ -1,6 +1,6 @@
-#include <algorithm>
-
 #include "pattern.h"
+
+#include <algorithm>
 
 namespace BitPatterns
 {

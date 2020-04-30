@@ -5,7 +5,7 @@ using std::optional;
 namespace MemLoader
 {
     optional<hot_spot> pass::execute_one(dwords::iterator memory_begin, dwords::iterator memory_end,
-        size_t iteration, size_t thread_id, progress_callback callback,
+        size_t iteration, size_t thread_id, progress_callback update_progress,
         continuator_callback can_continue) const
     {
         pattern->reset_frame();
@@ -14,7 +14,7 @@ namespace MemLoader
             pattern->calculate_frame();
             dwords frame = pattern->get();
 
-            const hot_spot here{ *this, iteration ,pattern->current_frame(), thread_id, !can_continue() };
+            const hot_spot here{ *this, iteration, pattern->current_frame(), thread_id, !can_continue() };
 
             if (here.is_interrupted)
             {
@@ -32,7 +32,7 @@ namespace MemLoader
                 return here;
             }
 
-            callback(here);
+            update_progress(here);
 
             pattern->advance_current_frame();
         }
@@ -40,13 +40,13 @@ namespace MemLoader
     }
 
     optional<hot_spot> pass::execute(dwords::iterator memory_begin, dwords::iterator memory_end,
-        size_t thread_id, progress_callback callback,
+        size_t thread_id, progress_callback update_progress,
         continuator_callback can_continue) const
     {
         for (size_t repetition = 0; repetition < repetitions; ++repetition)
         {
             auto result = execute_one(memory_begin, memory_end,
-                repetition, thread_id, callback, can_continue);
+                repetition, thread_id, update_progress, can_continue);
 
             if (result.has_value())
             {

@@ -18,11 +18,13 @@ namespace MemLoader
         std::unique_ptr<BitPatterns::pattern> pattern;
         size_t repetitions;
 
-        std::optional<hot_spot> execute_one(dwords::iterator memory_begin, dwords::iterator memory_end,
-            size_t iteration, size_t thread_id, progress_callback callback,
-            continuator_callback can_continue) const;
         std::optional<hot_spot> execute(dwords::iterator memory_begin, dwords::iterator memory_end,
-            size_t thread_id, progress_callback callback,
+            size_t thread_id, progress_callback update_progress,
+            continuator_callback can_continue) const;
+
+    private:
+        std::optional<hot_spot> execute_one(dwords::iterator memory_begin, dwords::iterator memory_end,
+            size_t iteration, size_t thread_id, progress_callback update_progress,
             continuator_callback can_continue) const;
     };
 }
